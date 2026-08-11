@@ -1,121 +1,188 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+// CommonMark does not close **bold** when it touches Korean text, so patch it
+import remarkCjkFriendly from 'remark-cjk-friendly'
+import { analyzeSajuStream } from './gemini'
 import './App.css'
 
+// A half-written **bold** would show its asterisks until the closing pair
+// arrives, so drop the dangling opener while streaming.
+function hideUnclosedBold(text) {
+  const marks = text.match(/\*\*/g)
+  if (!marks || marks.length % 2 === 0) return text
+
+  const last = text.lastIndexOf('**')
+  return text.slice(0, last) + text.slice(last + 2)
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  // Form states
+  const [name, setName] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [birthTime, setBirthTime] = useState('')
+  const [gender, setGender] = useState('')
+  // 'solar' = 양력, 'lunar' = 음력
+  const [calendarType, setCalendarType] = useState('solar')
+
+  // API result states
+  const [result, setResult] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  // When the user clicks the button, call Gemini
+  async function handleAnalyze() {
+    setIsLoading(true)
+    setError('')
+    setResult('')
+
+    try {
+      // Append each streamed piece so the text appears while it is written
+      await analyzeSajuStream(
+        { name, birthDate, birthTime, gender, calendarType },
+        (delta) => setResult((prev) => prev + delta),
+      )
+    } catch (err) {
+      console.error(err)
+      setError(err?.message || '사주 해석 요청에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="page">
+      <header className="header">
+        <h1 className="title">사주 해석</h1>
+        <p className="subtitle">태어난 정보를 입력하면 사주 명식을 해석해 드립니다.</p>
+      </header>
+
+      <div className="card">
+        <div className="field">
+          <label className="field-label" htmlFor="name">
+            이름
+          </label>
+          <input
+            className="input"
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름을 입력하세요"
+          />
         </div>
-        <div>
-          <h1>서희찬의 사주</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+
+        <div className="field">
+          <label className="field-label" htmlFor="birthDate">
+            생년월일
+          </label>
+          <input
+            className="input"
+            id="birthDate"
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+
+        <div className="field">
+          <label className="field-label" htmlFor="birthTime">
+            태어난 시간
+          </label>
+          <input
+            className="input"
+            id="birthTime"
+            type="time"
+            value={birthTime}
+            onChange={(e) => setBirthTime(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <span className="field-label">성별</span>
+          <div className="segmented">
+            <label className="segment">
+              <input
+                type="radio"
+                name="gender"
+                value="male"
+                checked={gender === 'male'}
+                onChange={(e) => setGender(e.target.value)}
+              />
+              남자
+            </label>
+            <label className="segment">
+              <input
+                type="radio"
+                name="gender"
+                value="female"
+                checked={gender === 'female'}
+                onChange={(e) => setGender(e.target.value)}
+              />
+              여자
+            </label>
+          </div>
+        </div>
+
+        <div className="field">
+          <span className="field-label">양력 / 음력</span>
+          <div className="segmented">
+            <label className="segment">
+              <input
+                type="radio"
+                name="calendarType"
+                value="solar"
+                checked={calendarType === 'solar'}
+                onChange={(e) => setCalendarType(e.target.value)}
+              />
+              양력
+            </label>
+            <label className="segment">
+              <input
+                type="radio"
+                name="calendarType"
+                value="lunar"
+                checked={calendarType === 'lunar'}
+                onChange={(e) => setCalendarType(e.target.value)}
+              />
+              음력
+            </label>
+          </div>
+        </div>
+
+        <button className="submit" type="button" onClick={handleAnalyze} disabled={isLoading}>
+          {isLoading ? '해석 중...' : '사주 해석하기'}
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
+      {error && <p className="error">{error}</p>}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Skeleton until the first piece of text arrives */}
+      {isLoading && !result && (
+        <section className="result" aria-busy="true">
+          <h2 className="result-title">사주 해석 결과</h2>
+          <div className="skeleton">
+            <span className="skeleton-line" />
+            <span className="skeleton-line skeleton-line--short" />
+            <span className="skeleton-line" />
+            <span className="skeleton-line" />
+            <span className="skeleton-line skeleton-line--short" />
+          </div>
+        </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {result && (
+        <section className="result" aria-live="polite">
+          <h2 className="result-title">사주 해석 결과</h2>
+          {/* Gemini returns markdown, so render it instead of raw text */}
+          <div className={`result-body${isLoading ? ' is-streaming' : ''}`}>
+            <Markdown remarkPlugins={[remarkGfm, remarkCjkFriendly]}>
+              {isLoading ? hideUnclosedBold(result) : result}
+            </Markdown>
+          </div>
+        </section>
+      )}
+    </div>
   )
 }
 
