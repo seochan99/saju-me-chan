@@ -1,15 +1,16 @@
-# 사주 웹 (saju-me-chan)
+# React + Vite
 
-나만의 사주를 쉽고 재미있게 보는 웹 서비스입니다.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 개요
+Currently, two official plugins are available:
 
-생년월일·시간을 입력하면 사주 명식을 계산하고, 결과를 보기 좋게 보여주는 웹 앱을 목표로 합니다.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## 상태
+## React Compiler
 
-🚧 초기 세팅 중 — 곧 업데이트 예정입니다.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 라이선스
+## Expanding the ESLint configuration
 
-Private / TBD
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
