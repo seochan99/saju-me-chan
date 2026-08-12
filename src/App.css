@@ -71,12 +71,19 @@
   gap: 6px;
 }
 
+.sidebar-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
 .sidebar-item {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  width: 100%;
+  min-width: 0;
   padding: 10px 12px;
   font: inherit;
   text-align: left;
@@ -126,6 +133,30 @@
 .sidebar-item:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(255, 190, 145, 0.4);
+}
+
+.sidebar-delete {
+  flex: 0 0 auto;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-500);
+  background-color: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.sidebar-delete:hover:not(:disabled) {
+  color: #8a3a2a;
+  border-color: #e0a090;
+  background-color: #fff5f2;
+}
+
+.sidebar-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .page {
@@ -188,6 +219,12 @@
   color: var(--ink-700);
 }
 
+.mode-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .mode-banner-action {
   flex-shrink: 0;
   padding: 6px 10px;
@@ -203,6 +240,15 @@
 
 .mode-banner-action:hover:not(:disabled) {
   background-color: var(--cream);
+}
+
+.mode-banner-action--danger {
+  color: #8a3a2a;
+  border-color: #e0a090;
+}
+
+.mode-banner-action--danger:hover:not(:disabled) {
+  background-color: #fff5f2;
 }
 
 .mode-banner-action:disabled {
@@ -334,6 +380,7 @@
 }
 
 .submit {
+  flex: 1;
   height: 50px;
   background-color: var(--peach);
   color: var(--ink-900);
@@ -343,6 +390,35 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.secondary {
+  flex: 0 0 auto;
+  min-width: 110px;
+  height: 50px;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink-700);
+  background-color: var(--cream);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #fff;
+}
+
+.secondary:disabled {
+  color: var(--ink-400);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .submit:hover:not(:disabled) {

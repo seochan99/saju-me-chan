@@ -24,6 +24,22 @@ function formatBirthDate(value) {
   return `${year}.${month}.${day}`
 }
 
+function buildReadingPayload(formData, resultText) {
+  const payload = {
+    name: formData.name || '미입력',
+    birth_date: formData.birthDate || null,
+    birth_time: formData.birthTime || null,
+    gender: formData.gender || null,
+    calendar_type: formData.calendarType,
+  }
+
+  if (resultText !== undefined) {
+    payload.result = resultText
+  }
+
+  return payload
+}
+
 function App() {
   // Form states
   const [name, setName] = useState('')
@@ -36,6 +52,7 @@ function App() {
   // API result states
   const [result, setResult] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
   // Saved readings for the sidebar
@@ -47,6 +64,7 @@ function App() {
   const shouldScrollToResultRef = useRef(false)
 
   const canAnalyze = Boolean(name.trim() && birthDate && gender)
+  const isBusy = isLoading || isSaving
   const isViewingSaved = Boolean(selectedId && result && !isLoading)
 
   useEffect(() => {
@@ -85,7 +103,7 @@ function App() {
   }
 
   async function handleSelectReading(id) {
-    if (isLoading || id === selectedId) return
+    if (isBusy || id === selectedId) return
 
     setError('')
     setSelectedId(id)
@@ -111,50 +129,114 @@ function App() {
     setResult(data.result ?? '')
   }
 
-  async function saveReading(formData, resultText) {
+  // Create a new reading after analysis
+  async function createReading(formData, resultText) {
     const { data, error: insertError } = await supabase
       .from('saju_readings')
-      .insert({
-        name: formData.name || '미입력',
-        birth_date: formData.birthDate || null,
-        birth_time: formData.birthTime || null,
-        gender: formData.gender || null,
-        calendar_type: formData.calendarType,
-        result: resultText,
-      })
+      .insert(buildReadingPayload(formData, resultText))
       .select('id')
       .single()
 
     if (insertError) {
       console.error(insertError)
       setError(insertError.message || '사주 결과 저장에 실패했습니다.')
-      return
+      return null
     }
 
-    if (data?.id) setSelectedId(data.id)
+    return data?.id ?? null
+  }
+
+  // Update an existing reading (form + optional result rewrite)
+  async function updateReading(id, formData, resultText) {
+    const { error: updateError } = await supabase
+      .from('saju_readings')
+      .update(buildReadingPayload(formData, resultText))
+      .eq('id', id)
+
+    if (updateError) {
+      console.error(updateError)
+      setError(updateError.message || '사주 결과 수정에 실패했습니다.')
+      return false
+    }
+
+    return true
+  }
+
+  // Persist form fields on the selected reading without re-running Gemini
+  async function handleSaveInfo() {
+    if (!selectedId || !canAnalyze || isBusy) return
+
+    setIsSaving(true)
+    setError('')
+
+    const formData = { name: name.trim(), birthDate, birthTime, gender, calendarType }
+    const ok = await updateReading(selectedId, formData)
+
+    setIsSaving(false)
+    if (!ok) return
+
     await loadReadings()
   }
 
-  // When the user clicks the button, call Gemini then save the full result
-  async function handleAnalyze() {
-    if (!canAnalyze || isLoading) return
+  async function handleDeleteReading(id, event) {
+    event.stopPropagation()
+    if (isBusy) return
 
+    const target = readings.find((reading) => reading.id === id)
+    const label = target?.name ? `"${target.name}"` : '이 사주'
+    if (!window.confirm(`${label} 기록을 삭제할까요?`)) return
+
+    setIsSaving(true)
+    setError('')
+
+    const { error: deleteError } = await supabase.from('saju_readings').delete().eq('id', id)
+
+    setIsSaving(false)
+
+    if (deleteError) {
+      console.error(deleteError)
+      setError(deleteError.message || '사주 삭제에 실패했습니다.')
+      return
+    }
+
+    if (selectedId === id) {
+      handleNewReading()
+    }
+
+    await loadReadings()
+  }
+
+  // Analyze with Gemini, then create or update depending on selection
+  async function handleAnalyze() {
+    if (!canAnalyze || isBusy) return
+
+    const editingId = selectedId
     setIsLoading(true)
     setError('')
     setResult('')
-    setSelectedId(null)
     shouldScrollToResultRef.current = false
 
     const formData = { name: name.trim(), birthDate, birthTime, gender, calendarType }
 
     try {
-      // Append each streamed piece so the text appears while it is written
       const fullText = await analyzeSajuStream(formData, (delta) =>
         setResult((prev) => prev + delta),
       )
 
-      if (fullText) {
-        await saveReading(formData, fullText)
+      if (!fullText) return
+
+      if (editingId) {
+        const ok = await updateReading(editingId, formData, fullText)
+        if (ok) {
+          setSelectedId(editingId)
+          await loadReadings()
+        }
+      } else {
+        const newId = await createReading(formData, fullText)
+        if (newId) {
+          setSelectedId(newId)
+          await loadReadings()
+        }
       }
     } catch (err) {
       console.error(err)
@@ -165,7 +247,7 @@ function App() {
   }
 
   function handleNewReading() {
-    if (isLoading) return
+    if (isBusy) return
 
     setName('')
     setBirthDate('')
@@ -189,7 +271,7 @@ function App() {
 
   const submitLabel = isLoading
     ? '해석 중...'
-    : isViewingSaved
+    : selectedId
       ? '다시 해석하기'
       : '사주 해석하기'
 
@@ -201,7 +283,7 @@ function App() {
           type="button"
           className="sidebar-new"
           onClick={handleNewReading}
-          disabled={isLoading}
+          disabled={isBusy}
         >
           <span aria-hidden="true">+</span> 새 사주 만들기
         </button>
@@ -212,17 +294,27 @@ function App() {
         ) : (
           <ul className="sidebar-list">
             {readings.map((reading) => (
-              <li key={reading.id}>
+              <li key={reading.id} className="sidebar-row">
                 <button
                   type="button"
                   className={`sidebar-item${selectedId === reading.id ? ' is-active' : ''}`}
                   onClick={() => handleSelectReading(reading.id)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                 >
                   <span className="sidebar-item-name">{reading.name}</span>
                   {reading.birth_date && (
                     <span className="sidebar-item-meta">{formatBirthDate(reading.birth_date)}</span>
                   )}
+                </button>
+                <button
+                  type="button"
+                  className="sidebar-delete"
+                  onClick={(event) => handleDeleteReading(reading.id, event)}
+                  disabled={isBusy}
+                  aria-label={`${reading.name} 삭제`}
+                  title="삭제"
+                >
+                  삭제
                 </button>
               </li>
             ))}
@@ -240,14 +332,24 @@ function App() {
           {isViewingSaved && (
             <div className="mode-banner">
               <p className="mode-banner-text">저장된 사주를 보고 있습니다</p>
-              <button
-                type="button"
-                className="mode-banner-action"
-                onClick={handleNewReading}
-                disabled={isLoading}
-              >
-                새로 입력하기
-              </button>
+              <div className="mode-banner-actions">
+                <button
+                  type="button"
+                  className="mode-banner-action"
+                  onClick={handleNewReading}
+                  disabled={isBusy}
+                >
+                  새로 입력하기
+                </button>
+                <button
+                  type="button"
+                  className="mode-banner-action mode-banner-action--danger"
+                  onClick={(event) => handleDeleteReading(selectedId, event)}
+                  disabled={isBusy}
+                >
+                  삭제
+                </button>
+              </div>
             </div>
           )}
 
@@ -263,7 +365,7 @@ function App() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="이름을 입력하세요"
-              disabled={isLoading}
+              disabled={isBusy}
               autoComplete="name"
             />
           </div>
@@ -278,7 +380,7 @@ function App() {
               type="date"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
-              disabled={isLoading}
+              disabled={isBusy}
             />
           </div>
 
@@ -292,7 +394,7 @@ function App() {
               type="time"
               value={birthTime}
               onChange={(e) => setBirthTime(e.target.value)}
-              disabled={isLoading}
+              disabled={isBusy}
             />
             <p className="field-hint">모르면 비워 두어도 됩니다.</p>
           </div>
@@ -302,25 +404,25 @@ function App() {
               성별 <span className="required">필수</span>
             </span>
             <div className="segmented">
-              <label className={`segment${isLoading ? ' is-disabled' : ''}`}>
+              <label className={`segment${isBusy ? ' is-disabled' : ''}`}>
                 <input
                   type="radio"
                   name="gender"
                   value="male"
                   checked={gender === 'male'}
                   onChange={(e) => setGender(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                 />
                 남자
               </label>
-              <label className={`segment${isLoading ? ' is-disabled' : ''}`}>
+              <label className={`segment${isBusy ? ' is-disabled' : ''}`}>
                 <input
                   type="radio"
                   name="gender"
                   value="female"
                   checked={gender === 'female'}
                   onChange={(e) => setGender(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                 />
                 여자
               </label>
@@ -330,42 +432,57 @@ function App() {
           <div className="field">
             <span className="field-label">양력 / 음력</span>
             <div className="segmented">
-              <label className={`segment${isLoading ? ' is-disabled' : ''}`}>
+              <label className={`segment${isBusy ? ' is-disabled' : ''}`}>
                 <input
                   type="radio"
                   name="calendarType"
                   value="solar"
                   checked={calendarType === 'solar'}
                   onChange={(e) => setCalendarType(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                 />
                 양력
               </label>
-              <label className={`segment${isLoading ? ' is-disabled' : ''}`}>
+              <label className={`segment${isBusy ? ' is-disabled' : ''}`}>
                 <input
                   type="radio"
                   name="calendarType"
                   value="lunar"
                   checked={calendarType === 'lunar'}
                   onChange={(e) => setCalendarType(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                 />
                 음력
               </label>
             </div>
           </div>
 
-          <button
-            className="submit"
-            type="button"
-            onClick={handleAnalyze}
-            disabled={isLoading || !canAnalyze}
-          >
-            {submitLabel}
-          </button>
+          <div className="action-row">
+            {selectedId && (
+              <button
+                className="secondary"
+                type="button"
+                onClick={handleSaveInfo}
+                disabled={isBusy || !canAnalyze}
+              >
+                {isSaving ? '저장 중...' : '정보 저장'}
+              </button>
+            )}
+            <button
+              className="submit"
+              type="button"
+              onClick={handleAnalyze}
+              disabled={isBusy || !canAnalyze}
+            >
+              {submitLabel}
+            </button>
+          </div>
 
-          {!canAnalyze && !isLoading && (
+          {!canAnalyze && !isBusy && (
             <p className="form-hint">이름, 생년월일, 성별을 입력하면 해석할 수 있습니다.</p>
+          )}
+          {selectedId && canAnalyze && !isBusy && (
+            <p className="form-hint">정보 저장은 입력값만 수정하고, 다시 해석하기는 결과를 새로 만듭니다.</p>
           )}
         </div>
 
