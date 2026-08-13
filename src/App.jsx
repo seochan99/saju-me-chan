@@ -347,6 +347,9 @@ function App() {
   // Caption shown under the baking mascot while waiting
   const [bakeStep, setBakeStep] = useState(0)
 
+  // Public total used as a trust signal on the guest landing
+  const [readingCount, setReadingCount] = useState(null)
+
   const profileNameRef = useRef(null)
   const shouldScrollToResultRef = useRef(false)
   const toastTimersRef = useRef([])
@@ -387,6 +390,16 @@ function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setIsAuthLoading(false)
+    })
+
+    supabase.rpc('get_saju_reading_count').then(({ data, error: countError }) => {
+      if (!isMounted) return
+      if (countError) {
+        console.error(countError)
+        return
+      }
+      const next = Number(data)
+      if (Number.isFinite(next)) setReadingCount(next)
     })
 
     return () => {
@@ -1041,6 +1054,12 @@ function App() {
               ? '로그인 없이 바로 본다냥. 정보만 넣으면 도사냥이 명식을 읽어 준다냥.'
               : '저장된 내 정보로 도사냥이 바로 명식을 읽어 준다냥.'}
           </p>
+          {isGuest && readingCount != null && readingCount > 0 && (
+            <p className="trust-count">
+              지금까지 총 <span>{readingCount.toLocaleString('ko-KR')}</span>
+              개의 사주가 생성되었습니다
+            </p>
+          )}
         </header>
 
         <div className="card" id="saju-form">
