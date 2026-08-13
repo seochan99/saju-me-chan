@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/((?!assets/|google.*\\.html).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
