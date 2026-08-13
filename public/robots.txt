@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://saju-me-chan.vercel.app/sitemap.xml

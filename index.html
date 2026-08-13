@@ -1,13 +1,104 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saju-me</title>
+
+    <title>사주 도사냥 | 냉정한 고양이 도사의 AI 사주 해석</title>
+    <meta
+      name="description"
+      content="생년월일시만 넣으면 고양이 도사 도사냥이 사주 명식을 읽고 성격, 재물, 연애, 올해 운세까지 직설적으로 풀어 준다냥. Google 로그인 한 번이면 끝."
+    />
+    <meta
+      name="keywords"
+      content="사주, 사주풀이, 무료사주, AI 사주, 사주 해석, 명식, 오행, 운세, 도사냥"
+    />
+    <link rel="canonical" href="https://saju-me-chan.vercel.app/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <!-- Open Graph — KakaoTalk, Facebook, LINE previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="사주 도사냥" />
+    <meta property="og:url" content="https://saju-me-chan.vercel.app/" />
+    <meta property="og:title" content="사주 도사냥 | 냉정한 고양이 도사의 AI 사주 해석" />
+    <meta
+      property="og:description"
+      content="생년월일시만 넣으면 고양이 도사가 명식을 읽고 성격, 재물, 연애, 올해 운세까지 직설적으로 풀어 준다냥."
+    />
+    <meta property="og:image" content="https://saju-me-chan.vercel.app/assets/images/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="타로 카드를 든 고양이 도사 캐릭터와 '사주 도사냥' 문구" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="사주 도사냥 | 냉정한 고양이 도사의 AI 사주 해석" />
+    <meta
+      name="twitter:description"
+      content="생년월일시만 넣으면 고양이 도사가 명식을 읽고 성격, 재물, 연애, 올해 운세까지 직설적으로 풀어 준다냥."
+    />
+    <meta name="twitter:image" content="https://saju-me-chan.vercel.app/assets/images/og-image.png" />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/favicon/apple-icon-120x120.png" />
+    <link rel="manifest" href="/favicon/manifest.json" />
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="#3f4863" />
+    <meta name="theme-color" content="#f2f5fc" />
+    <meta name="apple-mobile-web-app-title" content="도사냥" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://hangeul.pstatic.net" crossorigin />
+    <!-- 기랑해랑체: brand wordmark and hero titles -->
+    <link href="https://fonts.googleapis.com/css2?family=Kirang+Haerang&display=swap" rel="stylesheet" />
+    <!-- 프리텐다드: body and UI text -->
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "사주 도사냥",
+        "alternateName": "도사냥",
+        "url": "https://saju-me-chan.vercel.app/",
+        "description": "생년월일시를 입력하면 고양이 도사 캐릭터가 사주 명식을 해석해 주는 AI 사주 풀이 서비스.",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "ko-KR",
+        "image": "https://saju-me-chan.vercel.app/assets/images/og-image.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- The app renders client-side, so give crawlers and no-JS visitors the gist -->
+    <noscript>
+      <h1>사주 도사냥</h1>
+      <p>
+        생년월일시를 입력하면 고양이 도사 도사냥이 사주 명식을 읽고 성격, 재물, 연애, 올해 운세를
+        해석해 줍니다. 이용하려면 브라우저에서 자바스크립트를 켜 주세요.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
