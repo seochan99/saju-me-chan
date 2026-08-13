@@ -1,29 +1,76 @@
+/* 마루 부리 (Naver) — one SemiBold file covers the display range so the
+   heading serif stays a single request */
+@font-face {
+  font-family: 'MaruBuri';
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2')
+    format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* Brand palette */
-  --peach: #ffbe91;
-  --peach-soft: #ffddb0;
-  --cream: #fffce1;
-  --sky: #cfebff;
+  /* Paper — neutral, slightly cool so the amber accents stay the only warmth */
+  --paper-50: #ffffff;
+  --paper-100: #f4f6fb;
+  --paper-200: #e9edf6;
+  --paper-300: #dce1ed;
 
-  /* Derived roles */
-  --ink-900: #4a3428;
-  --ink-700: #6b4f3d;
-  --ink-500: #8f7260;
-  --ink-400: #b39682;
-  --line: var(--peach-soft);
-  --line-strong: var(--peach);
-  --surface: #ffffff;
-  --canvas: var(--cream);
-  --accent: var(--peach);
-  --accent-soft: var(--sky);
+  /* Ink — the mascot's navy robe and tarot card */
+  --ink-900: #2a3148;
+  --ink-800: #3a425c;
+  --ink-700: #4f5874;
+  --ink-500: #6b7490;
+  --ink-400: #949bb0;
 
-  --radius: 10px;
-  --radius-lg: 16px;
+  /* Amber — the tabby fur */
+  --amber-600: #c2712a;
+  --amber-500: #e0913f;
+  --amber-400: #f0b269;
+  --amber-100: #f9e3c4;
 
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
-    'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  color: var(--ink-900);
+  /* Traditional accents */
+  --gold: #bf9b30;
+  --celadon: #6f9a8c;
+  --danger: #b0472f;
+
+  /* Semantic roles */
+  --canvas: #f2f5fc;
+  --surface: var(--paper-50);
+  --surface-raised: #f8fafd;
+  --surface-ink: #3f4863;
+  --text: var(--ink-900);
+  --text-muted: var(--ink-500);
+  --text-subtle: var(--ink-400);
+  --line: var(--paper-300);
+  --line-soft: rgba(220, 225, 237, 0.85);
+  --line-gold: rgba(191, 155, 48, 0.34);
+  --accent: var(--amber-500);
+  --accent-strong: var(--amber-600);
+  --accent-soft: var(--amber-100);
+
+  /* On-ink roles for the sidebar */
+  --on-ink: var(--paper-50);
+  --on-ink-muted: rgba(255, 255, 255, 0.72);
+  --on-ink-line: rgba(255, 255, 255, 0.18);
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(21, 24, 42, 0.06);
+  --shadow-md: 0 8px 20px rgba(21, 24, 42, 0.08);
+  --shadow-lg: 0 24px 56px rgba(21, 24, 42, 0.18);
+
+  --font-brand: 'Kirang Haerang', 'MaruBuri', serif;
+  --font-display: 'MaruBuri', 'Apple SD Gothic Neo', serif;
+  --font-body: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', -apple-system, sans-serif;
+
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text);
   background-color: var(--canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -40,9 +87,11 @@ body {
 }
 
 body {
-  display: flex;
-  justify-content: center;
   background-color: var(--canvas);
+  background-image:
+    radial-gradient(circle at 10% -12%, rgba(240, 178, 105, 0.2), transparent 46%),
+    radial-gradient(circle at 90% 4%, rgba(129, 154, 224, 0.16), transparent 44%);
+  background-attachment: fixed;
 }
 
 #root {
@@ -56,8 +105,20 @@ p {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
 button,
 input {
   font: inherit;
   color: inherit;
+}
+
+::selection {
+  background-color: var(--amber-100);
+  color: var(--ink-900);
 }
