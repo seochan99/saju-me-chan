@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai/web'
-import { SAJU_SYSTEM_INSTRUCTION, SAMPLE_SAJU_CHART } from './prompts/sajuBasic'
+import { SAJU_SYSTEM_INSTRUCTION, SAMPLE_SAJU_CHART } from '../prompts/sajuBasic'
 
 // Create Gemini client with the Vite env key
 const ai = new GoogleGenAI({

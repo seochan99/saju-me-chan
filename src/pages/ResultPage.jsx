@@ -2,25 +2,13 @@ import { useEffect, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkCjkFriendly from 'remark-cjk-friendly'
-import { supabase } from './supabase'
-import './App.css'
+import { MASCOT_MAIN, MASCOT_SUB } from '../constants/assets'
+import { trackEvent } from '../lib/analytics'
+import { supabase } from '../lib/supabase'
+import { formatReadingDate } from '../utils/format'
+import '../styles/app.css'
 
-const MASCOT_MAIN = '/assets/images/main-cat.png'
-const MASCOT_SUB = '/assets/images/sub-cat.png'
-
-function formatReadingDate(value) {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${year}.${month}.${day} ${hour}:${minute}`
-}
-
-function ResultPage({ token }) {
+export default function ResultPage({ token }) {
   const [result, setResult] = useState('')
   const [ownerName, setOwnerName] = useState('')
   const [createdAt, setCreatedAt] = useState('')
@@ -34,6 +22,7 @@ function ResultPage({ token }) {
       if (!token) {
         setError('공유 링크가 올바르지 않습니다.')
         setIsLoading(false)
+        trackEvent('shared_result_error', { reason: 'missing_token' })
         return
       }
 
@@ -50,6 +39,7 @@ function ResultPage({ token }) {
         console.error(fetchError)
         setError(fetchError.message || '공유된 사주를 불러오지 못했습니다.')
         setIsLoading(false)
+        trackEvent('shared_result_error', { reason: 'fetch_failed' })
         return
       }
 
@@ -58,6 +48,7 @@ function ResultPage({ token }) {
       if (!reading?.result) {
         setError('공유된 사주를 찾을 수 없습니다. 링크가 만료되었거나 잘못되었을 수 있어요.')
         setIsLoading(false)
+        trackEvent('shared_result_error', { reason: 'not_found' })
         return
       }
 
@@ -65,6 +56,7 @@ function ResultPage({ token }) {
       setOwnerName(reading.owner_name ?? '')
       setCreatedAt(reading.created_at ?? '')
       setIsLoading(false)
+      trackEvent('shared_result_view', { result_length: reading.result.length })
     }
 
     loadSharedReading()
@@ -91,7 +83,11 @@ function ResultPage({ token }) {
           <img className="mascot mascot--hero" src={MASCOT_SUB} alt="" aria-hidden="true" />
           <h1 className="share-title">사주를 찾을 수 없다냥</h1>
           <p className="share-subtitle">{error}</p>
-          <a className="submit share-home-link" href="/">
+          <a
+            className="submit share-home-link"
+            href="/"
+            onClick={() => trackEvent('shared_cta_click', { placement: 'error_card' })}
+          >
             내 사주 보러 가기
           </a>
         </div>
@@ -127,7 +123,11 @@ function ResultPage({ token }) {
 
         <p className="share-footer">
           나도 도사냥에게 사주를 물어보려면{' '}
-          <a className="share-footer-link" href="/">
+          <a
+            className="share-footer-link"
+            href="/"
+            onClick={() => trackEvent('shared_cta_click', { placement: 'footer' })}
+          >
             여기로
           </a>
         </p>
@@ -135,5 +135,3 @@ function ResultPage({ token }) {
     </div>
   )
 }
-
-export default ResultPage
